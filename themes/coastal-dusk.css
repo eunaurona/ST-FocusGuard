@@ -1,0 +1,19 @@
+/* 海边黄昏 · Coastal Dusk */
+:root {
+    --fg-bg: #f0f1f3;
+    --fg-color-1: 165,185,200;
+    --fg-color-2: 210,185,175;
+    --fg-color-3: 178,170,195;
+    --fg-color-4: 195,200,190;
+    --fg-glass-1: rgba(165,185,200,0.3);
+    --fg-glass-2: rgba(210,185,175,0.35);
+    --fg-glass-3: rgba(178,170,195,0.32);
+    --fg-glass-4: rgba(195,200,190,0.32);
+    --fg-text: #48505a;
+    --fg-text-secondary: #7a8088;
+    --fg-border: rgba(255,255,255,0.55);
+    --fg-accent: #a5b9c8;
+    --fg-success: #c3c8be;
+    --fg-warning: #d2b9af;
+    --fg-danger: #b2aac3;
+}

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#f4f0f0" />
+    <title>FocusGuard · 陪伴</title>
+    <link rel="manifest" href="pwa-manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* Companion-specific overrides */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--fg-bg, #f4f0f0);
+            color: var(--fg-text, #5c5254);
+        }
+
+        .companion-app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .companion-main {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 16px 80px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Bottom navigation */
+        .companion-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 env(safe-area-inset-bottom, 12px);
+            background: var(--fg-glass-1, rgba(200,175,170,0.3));
+            backdrop-filter: blur(var(--fg-blur, 20px));
+            -webkit-backdrop-filter: blur(var(--fg-blur, 20px));
+            border-top: 1px solid var(--fg-border, rgba(255,255,255,0.55));
+            z-index: 100;
+        }
+
+        .companion-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 16px;
+            border: none;
+            background: none;
+            color: var(--fg-text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .companion-nav-item.active {
+            color: var(--fg-text);
+            transform: scale(1.05);
+        }
+        .companion-nav-item .nav-icon {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        /* Onboarding screen */
+        .onboarding {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+            padding: 32px 24px;
+        }
+        .onboarding-greeting {
+            font-size: 20px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            background: var(--fg-glass-3, rgba(185,178,200,0.32));
+            backdrop-filter: blur(var(--fg-blur));
+            -webkit-backdrop-filter: blur(var(--fg-blur));
+            border: 1px solid var(--fg-border);
+            border-radius: var(--fg-radius-lg, 20px);
+            padding: 24px;
+        }
+        .onboarding-tasks {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .onboarding-task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: var(--fg-glass-1, rgba(200,175,170,0.3));
+            backdrop-filter: blur(var(--fg-blur));
+            -webkit-backdrop-filter: blur(var(--fg-blur));
+            border: 1px solid var(--fg-border);
+            border-radius: var(--fg-radius, 16px);
+            font-size: 14px;
+        }
+        .onboarding-btn {
+            margin-top: 12px;
+        }
+
+        /* Settings page */
+        .settings-page {
+            padding-bottom: 24px;
+        }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .settings-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--fg-text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .settings-card {
+            background: var(--fg-glass-2, rgba(170,190,175,0.35));
+            backdrop-filter: blur(var(--fg-blur));
+            -webkit-backdrop-filter: blur(var(--fg-blur));
+            border: 1px solid var(--fg-border);
+            border-radius: var(--fg-radius, 16px);
+            padding: 16px;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+        .settings-label {
+            font-size: 14px;
+            flex: 1;
+        }
+        .settings-value {
+            font-size: 14px;
+            color: var(--fg-text-secondary);
+        }
+        .settings-input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid var(--fg-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.3);
+            color: var(--fg-text);
+            font-size: 14px;
+            text-align: right;
+        }
+        .settings-input-wide {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            border: 1px solid var(--fg-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.3);
+            color: var(--fg-text);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .settings-select {
+            padding: 6px 10px;
+            border: 1px solid var(--fg-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.3);
+            color: var(--fg-text);
+            font-size: 14px;
+        }
+        .settings-textarea {
+            width: 100%;
+            min-height: 80px;
+            margin-top: 8px;
+            padding: 10px;
+            border: 1px solid var(--fg-border);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.3);
+            color: var(--fg-text);
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        /* Theme selector */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .theme-option {
+            padding: 12px;
+            border-radius: var(--fg-radius);
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: border-color 0.2s, transform 0.1s;
+        }
+        .theme-option:active {
+            transform: scale(0.97);
+        }
+        .theme-option.active {
+            border-color: var(--fg-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="companion-app" id="app">
+        <div class="companion-main" id="main-content">
+            <!-- Content injected by JS -->
+        </div>
+        <nav class="companion-nav">
+            <button class="companion-nav-item active" data-page="timeline">
+                <span class="nav-icon">◷</span>
+                <span>时间线</span>
+            </button>
+            <button class="companion-nav-item" data-page="calendar">
+                <span class="nav-icon">▦</span>
+                <span>日历</span>
+            </button>
+            <button class="companion-nav-item" data-page="settings">
+                <span class="nav-icon">⚙</span>
+                <span>设置</span>
+            </button>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { DataStore } from './modules/datastore.js';
+        import { Tasks } from './modules/tasks.js';
+        import { Timeline } from './modules/timeline.js';
+        import { Calendar } from './modules/calendar.js';
+        import { AIBall } from './modules/ai-ball.js';
+        import { Themes } from './modules/themes.js';
+        import { Streak } from './modules/streak.js';
+
+        // ─── State ───
+        let currentPage = 'timeline';
+        let hasShownOnboarding = false;
+        const mainContent = document.getElementById('main-content');
+
+        // ─── Init ───
+        DataStore.init();
+        Themes.init();
+        Streak.init();
+        Tasks.populateRecurringForToday();
+
+        // Init AI Ball
+        AIBall.init(document.getElementById('app'));
+
+        // Check if first visit today → show onboarding
+        const lastOnboarding = localStorage.getItem('fg-last-onboarding');
+        const today = DataStore.today();
+        if (lastOnboarding !== today) {
+            showOnboarding();
+        } else {
+            navigateTo('timeline');
+        }
+
+        // ─── Navigation ───
+        document.querySelectorAll('.companion-nav-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                navigateTo(btn.dataset.page);
+            });
+        });
+
+        function navigateTo(page) {
+            currentPage = page;
+            document.querySelectorAll('.companion-nav-item').forEach(b => {
+                b.classList.toggle('active', b.dataset.page === page);
+            });
+            renderPage();
+        }
+
+        function renderPage() {
+            switch (currentPage) {
+                case 'timeline': renderTimeline(); break;
+                case 'calendar': renderCalendar(); break;
+                case 'settings': renderSettings(); break;
+            }
+        }
+
+        // ─── Onboarding ───
+        function showOnboarding() {
+            hasShownOnboarding = true;
+            const todayTasks = Tasks.getToday();
+            const streak = Streak.getStreak();
+
+            const hour = new Date().getHours();
+            let greeting = '早安';
+            if (hour >= 12 && hour < 18) greeting = '下午好';
+            else if (hour >= 18) greeting = '晚上好';
+
+            mainContent.innerHTML = `
+                <div class="onboarding">
+                    <div class="onboarding-greeting">
+                        ${greeting}！连续打卡第 ${streak.current} 天了哦~<br/>
+                        ${todayTasks.length > 0
+                            ? '今天已经安排好了这些任务：'
+                            : '今天还没有安排任务，跟我说说想做什么吧~'}
+                    </div>
+                    ${todayTasks.length > 0 ? `
+                        <div class="onboarding-tasks">
+                            ${todayTasks.map(t => `
+                                <div class="onboarding-task-item">
+                                    <span>${t.timeStart || '--:--'} ${escapeHtml(t.text)}</span>
+                                    <span style="color:var(--fg-accent)">+${t.reward}min</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    <button class="fg-btn fg-btn-primary onboarding-btn" id="onboarding-start">
+                        ${todayTasks.length > 0 ? '开始今天的旅程' : '跟小球聊聊'}
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('onboarding-start')?.addEventListener('click', () => {
+                localStorage.setItem('fg-last-onboarding', today);
+                navigateTo('timeline');
+                if (todayTasks.length === 0) {
+                    AIBall.toggleChat(true);
+                }
+            });
+        }
+
+        // ─── Timeline ───
+        function renderTimeline(dateStr = null) {
+            mainContent.innerHTML = '<div id="timeline-container"></div>';
+            const container = document.getElementById('timeline-container');
+            container.dataset.date = dateStr || DataStore.today();
+            Timeline.render(container, dateStr);
+        }
+
+        // ─── Calendar ───
+        function renderCalendar() {
+            mainContent.innerHTML = '<div id="calendar-container"></div>';
+            const container = document.getElementById('calendar-container');
+            Calendar.render(container, (dateStr) => {
+                // Click date → go to that day's timeline
+                currentPage = 'timeline';
+                document.querySelectorAll('.companion-nav-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.page === 'timeline');
+                });
+                renderTimeline(dateStr);
+            });
+        }
+
+        // ─── Settings ───
+        function renderSettings() {
+            const s = DataStore.get('settings') || {};
+            const streak = Streak.getStreak();
+            const themeList = Themes.getThemeList();
+
+            mainContent.innerHTML = `
+                <div class="settings-page">
+                    <h2 style="margin:0 0 16px;font-size:22px;">设置</h2>
+
+                    <!-- Focus Mode -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">专注模式</div>
+                        <div class="settings-card">
+                            <div class="settings-row">
+                                <span class="settings-label">品尝时间（分钟）</span>
+                                <input type="number" class="settings-input" id="s-tasting-time"
+                                    value="${s.tastingTime || 30}" min="5" max="180" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">消息条数上限</span>
+                                <input type="number" class="settings-input" id="s-tasting-msgs"
+                                    value="${s.tastingMessages || 20}" min="1" max="200" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">计量方式</span>
+                                <select class="settings-select" id="s-counting-mode">
+                                    <option value="time" ${s.countingMode === 'time' ? 'selected' : ''}>纯时间制</option>
+                                    <option value="messages" ${s.countingMode === 'messages' ? 'selected' : ''}>纯消息条数</option>
+                                    <option value="dual" ${s.countingMode === 'dual' || !s.countingMode ? 'selected' : ''}>双重（先到先触发）</option>
+                                </select>
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">延长券每日次数</span>
+                                <input type="number" class="settings-input" id="s-tickets-daily"
+                                    value="${s.extensionTicketsDaily || 3}" min="0" max="20" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">每次延长时长（分钟）</span>
+                                <input type="number" class="settings-input" id="s-ticket-minutes"
+                                    value="${s.extensionTicketMinutes || 5}" min="1" max="30" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">每次延长条数</span>
+                                <input type="number" class="settings-input" id="s-ticket-msgs"
+                                    value="${s.extensionTicketMessages || 3}" min="1" max="20" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overlay -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">开屏遮罩</div>
+                        <div class="settings-card">
+                            <div class="settings-row">
+                                <span class="settings-label">显示频率</span>
+                                <select class="settings-select" id="s-overlay-freq">
+                                    <option value="daily" ${s.overlayFrequency === 'daily' ? 'selected' : ''}>每天一次</option>
+                                    <option value="always" ${s.overlayFrequency === 'always' ? 'selected' : ''}>每次打开</option>
+                                    <option value="off" ${s.overlayFrequency === 'off' ? 'selected' : ''}>关闭</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">悬浮条</div>
+                        <div class="settings-card">
+                            <div class="settings-row">
+                                <span class="settings-label">透明度</span>
+                                <input type="range" id="s-toolbar-opacity" min="0.3" max="1" step="0.05"
+                                    value="${s.toolbarOpacity || 0.85}" style="width:120px" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">大小</span>
+                                <input type="range" id="s-toolbar-size" min="0.7" max="1.3" step="0.1"
+                                    value="${s.toolbarSize || 1}" style="width:120px" />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">显示时间</span>
+                                <input type="checkbox" id="s-toolbar-time" ${s.toolbarShowTime !== false ? 'checked' : ''} />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">显示当前任务</span>
+                                <input type="checkbox" id="s-toolbar-task" ${s.toolbarShowTask !== false ? 'checked' : ''} />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">显示倒计时</span>
+                                <input type="checkbox" id="s-toolbar-countdown" ${s.toolbarShowCountdown !== false ? 'checked' : ''} />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">显示进度</span>
+                                <input type="checkbox" id="s-toolbar-progress" ${s.toolbarShowProgress !== false ? 'checked' : ''} />
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">显示下一任务</span>
+                                <input type="checkbox" id="s-toolbar-next" ${s.toolbarShowNextTask !== false ? 'checked' : ''} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Endpoint -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">AI 端口配置</div>
+                        <div class="settings-card">
+                            <div class="settings-row" style="flex-direction:column;align-items:flex-start;">
+                                <span class="settings-label">API 端点 URL</span>
+                                <input type="url" class="settings-input-wide" id="s-ai-endpoint"
+                                    value="${escapeHtml(s.aiEndpoint || '')}"
+                                    placeholder="https://api.openai.com/v1/chat/completions" />
+                            </div>
+                            <div class="settings-row" style="flex-direction:column;align-items:flex-start;">
+                                <span class="settings-label">API 密钥</span>
+                                <input type="password" class="settings-input-wide" id="s-ai-key"
+                                    value="${s.aiApiKey || ''}"
+                                    placeholder="sk-..." />
+                            </div>
+                            <div class="settings-row" style="flex-direction:column;align-items:flex-start;">
+                                <span class="settings-label">模型</span>
+                                <input type="text" class="settings-input-wide" id="s-ai-model"
+                                    value="${escapeHtml(s.aiModel || 'gpt-4o-mini')}"
+                                    placeholder="gpt-4o-mini" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">主题</div>
+                        <div class="settings-card">
+                            <div class="theme-grid">
+                                ${themeList.map(t => `
+                                    <div class="theme-option ${s.currentTheme === t.id ? 'active' : ''}"
+                                         data-theme="${t.id}"
+                                         style="background:var(--fg-glass-${themeList.indexOf(t) % 4 + 1});">
+                                        ${t.name}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="settings-row" style="margin-top:12px;flex-direction:column;align-items:flex-start;">
+                                <span class="settings-label">上传自定义 CSS</span>
+                                <input type="file" accept=".css" id="s-css-upload" style="margin-top:8px;font-size:13px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Letter to Self -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">给未来的自己</div>
+                        <div class="settings-card">
+                            <p style="font-size:13px;color:var(--fg-text-secondary);margin:0 0 8px;">
+                                当你关闭扩展或打卡中断时，会看到这封信。写点什么鼓励自己吧~
+                            </p>
+                            <textarea class="settings-textarea" id="s-letter" rows="4"
+                                placeholder="亲爱的我，你装这个是因为...">${escapeHtml(Streak.getLetter())}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Streak Info -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">打卡统计</div>
+                        <div class="settings-card">
+                            <div class="settings-row">
+                                <span class="settings-label">当前连续打卡</span>
+                                <span class="settings-value">${streak.current} 天</span>
+                            </div>
+                            <div class="settings-row">
+                                <span class="settings-label">最长连续打卡</span>
+                                <span class="settings-value">${streak.longestStreak} 天</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">数据管理</div>
+                        <div class="settings-card" style="display:flex;gap:10px;">
+                            <button class="fg-btn fg-btn-secondary" id="s-export" style="flex:1;">导出数据</button>
+                            <button class="fg-btn fg-btn-secondary" id="s-import" style="flex:1;">导入数据</button>
+                            <input type="file" id="s-import-file" accept=".json" style="display:none;" />
+                        </div>
+                    </div>
+
+                    <!-- GitHub Sync Placeholder -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">GitHub 同步（即将推出）</div>
+                        <div class="settings-card" style="opacity:0.5;">
+                            <div class="settings-row">
+                                <span class="settings-label">仓库地址</span>
+                                <input type="text" class="settings-input" disabled placeholder="即将推出" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // ─── Bind settings events ───
+            const bindInput = (id, path, transform = v => v) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('change', () => {
+                    const val = el.type === 'checkbox' ? el.checked
+                        : el.type === 'number' || el.type === 'range' ? Number(el.value)
+                        : el.value;
+                    DataStore.set(`settings.${path}`, transform(val));
+                });
+            };
+
+            bindInput('s-tasting-time', 'tastingTime');
+            bindInput('s-tasting-msgs', 'tastingMessages');
+            bindInput('s-counting-mode', 'countingMode');
+            bindInput('s-tickets-daily', 'extensionTicketsDaily');
+            bindInput('s-ticket-minutes', 'extensionTicketMinutes');
+            bindInput('s-ticket-msgs', 'extensionTicketMessages');
+            bindInput('s-overlay-freq', 'overlayFrequency');
+            bindInput('s-toolbar-opacity', 'toolbarOpacity');
+            bindInput('s-toolbar-size', 'toolbarSize');
+            bindInput('s-toolbar-time', 'toolbarShowTime');
+            bindInput('s-toolbar-task', 'toolbarShowTask');
+            bindInput('s-toolbar-countdown', 'toolbarShowCountdown');
+            bindInput('s-toolbar-progress', 'toolbarShowProgress');
+            bindInput('s-toolbar-next', 'toolbarShowNextTask');
+            bindInput('s-ai-endpoint', 'aiEndpoint');
+            bindInput('s-ai-key', 'aiApiKey');
+            bindInput('s-ai-model', 'aiModel');
+
+            // Letter
+            document.getElementById('s-letter')?.addEventListener('change', (e) => {
+                Streak.setLetter(e.target.value);
+            });
+
+            // Theme
+            document.querySelectorAll('.theme-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const themeId = opt.dataset.theme;
+                    DataStore.set('settings.currentTheme', themeId);
+                    Themes.apply(themeId);
+                    document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                });
+            });
+
+            // CSS upload
+            document.getElementById('s-css-upload')?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    try {
+                        await Themes.handleCSSUpload(file);
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                }
+            });
+
+            // Export/Import
+            document.getElementById('s-export')?.addEventListener('click', () => {
+                const data = DataStore.exportData();
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `focusguard-backup-${DataStore.today()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            document.getElementById('s-import')?.addEventListener('click', () => {
+                document.getElementById('s-import-file')?.click();
+            });
+
+            document.getElementById('s-import-file')?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    if (DataStore.importData(ev.target.result)) {
+                        alert('导入成功！');
+                        renderSettings();
+                    } else {
+                        alert('导入失败，请检查文件格式。');
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // ─── Helpers ───
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        // ─── Auto-refresh timeline ───
+        DataStore.onChange((key) => {
+            if (currentPage === 'timeline' && (key === 'tasks' || key === 'full' || key === '_lastAIAction')) {
+                renderTimeline();
+            }
+        });
+
+        // Refresh every minute
+        setInterval(() => {
+            if (currentPage === 'timeline') renderTimeline();
+        }, 60000);
+    </script>
+</body>
+</html>

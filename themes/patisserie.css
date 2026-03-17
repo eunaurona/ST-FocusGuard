@@ -1,0 +1,19 @@
+/* 甜品柜台 · Patisserie */
+:root {
+    --fg-bg: #f5f2f0;
+    --fg-color-1: 210,180,170;
+    --fg-color-2: 175,195,210;
+    --fg-color-3: 180,200,178;
+    --fg-color-4: 190,178,200;
+    --fg-glass-1: rgba(210,180,170,0.3);
+    --fg-glass-2: rgba(175,195,210,0.35);
+    --fg-glass-3: rgba(180,200,178,0.32);
+    --fg-glass-4: rgba(190,178,200,0.32);
+    --fg-text: #524a4e;
+    --fg-text-secondary: #887e82;
+    --fg-border: rgba(255,255,255,0.55);
+    --fg-accent: #d2b4aa;
+    --fg-success: #b4c8b2;
+    --fg-warning: #d2c4a0;
+    --fg-danger: #c8a4a4;
+}

@@ -1,0 +1,19 @@
+/* 花店橱窗 · Flower Shop */
+:root {
+    --fg-bg: #f4f0f0;
+    --fg-color-1: 200,175,170;
+    --fg-color-2: 170,190,175;
+    --fg-color-3: 185,178,200;
+    --fg-color-4: 200,190,170;
+    --fg-glass-1: rgba(200,175,170,0.3);
+    --fg-glass-2: rgba(170,190,175,0.35);
+    --fg-glass-3: rgba(185,178,200,0.32);
+    --fg-glass-4: rgba(200,190,170,0.32);
+    --fg-text: #5c5254;
+    --fg-text-secondary: #8a7e7a;
+    --fg-border: rgba(255,255,255,0.55);
+    --fg-accent: #c8afaa;
+    --fg-success: #aabeaf;
+    --fg-warning: #d4b896;
+    --fg-danger: #c89a9a;
+}

@@ -1,0 +1,19 @@
+/* 极光冰面 · Aurora Ice */
+:root {
+    --fg-bg: #f0f3f5;
+    --fg-color-1: 170,195,210;
+    --fg-color-2: 170,205,195;
+    --fg-color-3: 180,210,200;
+    --fg-color-4: 185,180,205;
+    --fg-glass-1: rgba(170,195,210,0.3);
+    --fg-glass-2: rgba(170,205,195,0.35);
+    --fg-glass-3: rgba(180,210,200,0.32);
+    --fg-glass-4: rgba(185,180,205,0.32);
+    --fg-text: #404854;
+    --fg-text-secondary: #6a7280;
+    --fg-border: rgba(255,255,255,0.55);
+    --fg-accent: #aac3d2;
+    --fg-success: #aacdc3;
+    --fg-warning: #b4d2c8;
+    --fg-danger: #b9b4cd;
+}
